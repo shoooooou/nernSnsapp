@@ -3,6 +3,7 @@ const Post = require("../models/Post");
 const User = require("../models/User");
 //投稿を作成する
 router.post("/", async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   const newPost = new Post(req.body);
   try {
     const savedPost = await newPost.save();
@@ -14,6 +15,8 @@ router.post("/", async (req, res) => {
 
 //投稿を更新する
 router.put("/:id", async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+
   try {
     const post = await Post.findById(req.params.id);
     if (post.userId !== req.body.userId)
@@ -29,6 +32,8 @@ router.put("/:id", async (req, res) => {
 
 //投稿を削除する
 router.delete("/:id", async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+
   try {
     const deletePost = await Post.findById(req.params.id);
     if (deletePost.userId !== req.body.userId)
@@ -42,6 +47,7 @@ router.delete("/:id", async (req, res) => {
 
 //投稿を取得する
 router.get("/:id", async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
   try {
     const post = await Post.findById(req.params.id);
     res.status(200).json(post);
@@ -52,6 +58,8 @@ router.get("/:id", async (req, res) => {
 
 //特定の投稿にいいねを押す
 router.put("/:id/like", async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+
   try {
     //投稿の情報を持ってくる
     console.log(56);
@@ -82,13 +90,25 @@ router.put("/:id/like", async (req, res) => {
   }
 });
 
-//タイムラインの投稿を取得する
-router.get("/timeline/all", async (req, res) => {
+//プロフィール専用のタイムラインの取得
+router.get("/profile/:username", async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+
   try {
-    const currentUser = await User.findById(req.body.userId);
-    console.log(currentUser);
+    const user = await User.findOne({ username: req.params.username });
+    const posts = await Post.find({ userId: user._id });
+    return res.status(200).json(posts);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+//タイムラインの投稿を取得する
+router.get("/timeline/:userId", async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+
+  try {
+    const currentUser = await User.findById(req.params.userId);
     const userPosts = await Post.find({ userId: currentUser._id });
-    console.log("fP");
     const friendPosts = await Promise.all(
       currentUser.followings.map((friendId) => {
         return Post.find({ userId: friendId });
